@@ -9,9 +9,86 @@ import plotly.express as px
 import streamlit as st
 
 st.set_page_config(page_title="Agribusiness Secure Archive", layout="wide")
-st.title("🌱 Agribusiness Secure Archive")
-st.caption("Secure Digital Archive & Anomaly Detection Dashboard for Agribusiness Data")
 
+st.markdown("""
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
+:root {
+  --sage-bg: #f7f4fc;
+  --sage-soft: #eee7f8;
+  --sage: #8064a8;
+  --sage-dark: #40334f;
+  --sage-text: #62566f;
+  --sage-border: #e5ddef;
+}
+html, body, [class*="css"] { font-family: 'DM Sans', sans-serif; }
+.stApp { background: linear-gradient(135deg, #f7f4fc 0%, #f1ebf9 55%, #fbfaff 100%); color: var(--sage-dark); }
+/* Reserve space below Streamlit's native top bar so app controls never sit underneath it. */
+.block-container { padding-top: 4.6rem !important; padding-bottom: 2.5rem; max-width: 1500px; }
+[data-testid="stHeader"] {
+  height: 3.75rem;
+  background: rgba(247, 244, 252, 0.97) !important;
+  border-bottom: 1px solid #e5ddef;
+  z-index: 100;
+}
+[data-testid="stToolbar"] { z-index: 101; }
+[data-testid="stDecoration"] { background: #8064a8 !important; }
+/* Give the app's own header row enough vertical breathing room. */
+.main .block-container > div:first-child { padding-top: .2rem; }
+
+h1, h2, h3 { color: var(--sage-dark) !important; letter-spacing: -0.025em; }
+h1 { font-size: 2rem !important; font-weight: 700 !important; }
+h2 { font-size: 1.45rem !important; font-weight: 700 !important; }
+h3 { font-size: 1.12rem !important; font-weight: 650 !important; }
+[data-testid="stCaptionContainer"] { color: var(--sage-text); }
+[data-testid="stTabs"] [data-baseweb="tab-list"] { gap: .55rem; background: rgba(238,231,248,.8); padding: .45rem; border: 1px solid var(--sage-border); border-radius: 16px; }
+[data-testid="stTabs"] button[role="tab"] { border-radius: 11px; padding: .65rem 1rem; color: #62566f; font-weight: 600; border: 0; }
+[data-testid="stTabs"] button[role="tab"][aria-selected="true"] { background: #fff; color: #5b407e; box-shadow: 0 2px 10px rgba(91,64,126,.12); }
+[data-testid="stTabs"] [data-baseweb="tab-highlight"] { background: #6d9873; height: 0; }
+[data-testid="stMetric"] { background: rgba(255,255,255,.94); border: 1px solid var(--sage-border); padding: 1.05rem 1.1rem; border-radius: 17px; box-shadow: 0 5px 18px rgba(39,78,48,.055); }
+[data-testid="stMetricLabel"] { color: var(--sage-text); font-weight: 600; }
+[data-testid="stMetricValue"] { color: #40334f; font-weight: 700; }
+[data-testid="stVerticalBlockBorderWrapper"] { border-color: var(--sage-border) !important; border-radius: 17px !important; }
+[data-testid="stSidebar"] {
+  background: linear-gradient(180deg, #f0eafb 0%, #faf8fe 100%);
+  border-right: 1px solid var(--sage-border);
+  min-width: 285px !important;
+}
+[data-testid="stSidebar"] > div:first-child { padding: 1.2rem .85rem 1.5rem; }
+[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p { font-size: 1rem; line-height: 1.45; }
+[data-testid="stSidebar"] [role="radiogroup"] { gap: .42rem; }
+[data-testid="stSidebar"] [role="radiogroup"] label {
+  padding: .72rem .7rem !important;
+  border-radius: 12px !important;
+  min-height: 48px;
+  align-items: center !important;
+  font-size: 1rem !important;
+  font-weight: 550;
+}
+[data-testid="stSidebar"] [role="radiogroup"] label p { font-size: 1rem !important; }
+[data-testid="stSidebar"] [role="radiogroup"] label:has(input:checked) {
+  background: #e4d8f4 !important;
+  border: 1px solid #cdbbe7 !important;
+}
+[data-testid="stSidebar"] [role="radiogroup"] label > div:first-child { display: none; }
+[data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3 { color: #40334f !important; }
+.stButton > button, .stDownloadButton > button { border-radius: 11px; border: 1px solid #d9c9f0; background: #eee7f8; color: #5b407e; font-weight: 650; transition: all .18s ease; }
+.stButton > button:hover, .stDownloadButton > button:hover { background: #e4d8f4; border-color: #b8a2d6; color: #40334f; }
+[data-testid="stFileUploader"] section { background: rgba(255,255,255,.75); border: 1.5px dashed #b9a6d5; border-radius: 15px; }
+[data-testid="stDataFrame"], [data-testid="stTable"] { border: 1px solid var(--sage-border); border-radius: 13px; overflow: hidden; }
+[data-testid="stAlert"] { border-radius: 13px; }
+hr { border-color: var(--sage-border); }
+[data-testid="stButton"] button { min-height: 2.45rem; }
+[data-testid="stSidebar"] [data-testid="stRadio"] { margin-top: .3rem; }
+[data-testid="stSidebar"] [data-testid="stRadio"] label { color: #40334f; }
+@media (max-width: 768px) {
+  .block-container { padding: 4.25rem .8rem 2rem !important; }
+  h1 { font-size: 1.6rem !important; }
+  [data-testid="stTabs"] [data-baseweb="tab-list"] { gap: .15rem; }
+  [data-testid="stTabs"] button[role="tab"] { padding: .55rem .55rem; font-size: .82rem; }
+}
+</style>
+""", unsafe_allow_html=True)
 
 # =========================================================
 # CLOUD HASH REGISTRY (SUPABASE)
@@ -88,15 +165,110 @@ def validate_file_against_cloud(client, filename, sha256_hash):
     return False, "mismatch", record
 
 
-tab1, tab2, tab3 = st.tabs([
-    "1. Digital Archive & Integrity",
-    "2. Production Analytics",
-    "3. Network Log Forensics"
-])
+class StoredUpload:
+    def __init__(self, name, content):
+        self.name = name
+        self._content = content
+
+    def getvalue(self):
+        return self._content
+
+
+def persist_archive_upload():
+    uploaded = st.session_state.get("archive_upload_widget")
+    if uploaded is not None:
+        st.session_state["saved_archive_name"] = uploaded.name
+        st.session_state["saved_archive_bytes"] = uploaded.getvalue()
+
+
+def persist_reference_hash():
+    st.session_state["trusted_reference_hash"] = st.session_state.get("trusted_reference_hash_input", "")
+
+
+with st.sidebar:
+    st.markdown("""
+    <div style="display:flex;align-items:center;gap:12px;padding:8px 6px 22px;">
+      <div style="width:44px;height:44px;border-radius:14px;background:#e4d8f4;color:#6f5297;display:flex;align-items:center;justify-content:center;font-size:25px;font-weight:600;">A</div>
+      <div style="font-size:1.08rem;font-weight:750;color:#40334F;line-height:1.3;">Agribusiness<br>Secure Archive</div>
+    </div>
+    """, unsafe_allow_html=True)
+    selected_page = st.radio(
+        "Navigasi",
+        ["Dashboard", "Digital Archive & Integrity", "Production Analytics", "Network Log Forensics", "Settings"],
+        label_visibility="collapsed",
+        key="main_navigation",
+        format_func=lambda page: {
+            "Dashboard": "⌂   Dashboard",
+            "Digital Archive & Integrity": "▱   Digital Archive & Integrity",
+            "Production Analytics": "▥   Production Analytics",
+            "Network Log Forensics": "⌘   Network Log Forensics",
+            "Settings": "⚙   Settings",
+        }[page],
+    )
+    st.markdown("<hr style='margin:18px 0;border-color:#E5DDEF;'>", unsafe_allow_html=True)
+    st.caption("Pastel workspace · Agribusiness")
+
+head_title, head_spacer, head_notifications, head_settings = st.columns([5, 3, 0.8, 0.8])
+with head_title:
+    st.markdown("<div style='padding-top:8px;font-weight:700;font-size:1.08rem;color:#40334F;'>Agribusiness Secure Archive</div>", unsafe_allow_html=True)
+
+def toggle_notifications():
+    st.session_state["show_notifications"] = not st.session_state.get("show_notifications", False)
+    st.session_state["main_navigation"] = "Dashboard"
+
+def go_to_settings():
+    st.session_state["main_navigation"] = "Settings"
+
+with head_notifications:
+    st.button("♧", help="Lihat notifikasi", key="header_notifications", on_click=toggle_notifications)
+with head_settings:
+    st.button("⚙", help="Buka pengaturan", key="header_settings", on_click=go_to_settings)
+
+archive_file = None
+if st.session_state.get("saved_archive_bytes") is not None:
+    archive_file = StoredUpload(
+        st.session_state.get("saved_archive_name", "uploaded_file.csv"),
+        st.session_state["saved_archive_bytes"],
+    )
+reference_hash = st.session_state.get("trusted_reference_hash", "")
+
+if selected_page == "Dashboard":
+    st.markdown("""
+    <div style="background:linear-gradient(105deg,#FFFFFF 0%,#FAF7FF 65%,#EEE7F8 100%);border:1px solid #E5DDEF;border-radius:20px;padding:25px 28px;margin:.3rem 0 1.2rem;box-shadow:0 7px 22px rgba(91,64,126,.06);">
+      <div style="font-size:1.55rem;font-weight:750;color:#40334F;">🌿 Welcome back, Admin!</div>
+      <div style="color:#706879;margin-top:8px;max-width:650px;">Monitor integritas arsip, tren produksi, dan indikator anomali agribisnis dalam satu dashboard.</div>
+    </div>
+    """, unsafe_allow_html=True)
+    m1, m2, m3, m4 = st.columns(4)
+    m1.metric("Total Files", "—", help="Akan dihitung dari arsip yang diproses pada sesi ini.")
+    m2.metric("Integrity Verified", "—", help="Status bergantung pada verifikasi file yang dipilih.")
+    m3.metric("Total Production", "—", help="Belum ada file produksi yang dianalisis pada halaman Dashboard.")
+    m4.metric("Detected Anomalies", "—", help="Akan tampil setelah analisis produksi dijalankan.")
+    left, right = st.columns([1.4, 1])
+    with left:
+        st.markdown("### Ringkasan Project")
+        st.info("Pilih **Digital Archive & Integrity** untuk mengunggah file dan memeriksa SHA-256, atau **Production Analytics** untuk melihat tren dan trigger perubahan produksi.")
+    with right:
+        st.markdown("### Notifications")
+        if st.session_state.get("show_notifications", False):
+            st.info("Notifikasi integritas dan analisis akan ditampilkan setelah lu memproses file. Tidak ada event yang dibuat-buat.")
+        else:
+            st.caption("Belum ada notifikasi baru pada sesi ini.")
+        if st.button("Lihat notifikasi", key="dashboard_notifications"):
+            st.session_state["show_notifications"] = not st.session_state.get("show_notifications", False)
+            st.rerun()
+
+if selected_page == "Settings":
+    st.markdown("### Settings")
+    st.write("Pengaturan tampilan dashboard dan koneksi layanan.")
+    st.selectbox("Tema dashboard", ["Pastel ungu & putih"], index=0, disabled=True)
+    st.caption("Kredensial Supabase dibaca dari Streamlit Secrets atau environment variable. Jangan menaruh secrets di GitHub.")
+    st.info("Untuk mengubah kredensial deployment, buka Settings → Secrets pada Streamlit Community Cloud.")
+
 
 
 # =========================================================
-# HELPERS: READ CLEAN, RAW, AND PRODUCTION FILES
+# HELPERS: READ CLEAN, RAW, AND DUMMY PRODUCTION FILES
 # =========================================================
 def normalise_text(value):
     return " ".join(str(value).strip().lower().replace("_", " ").split())
@@ -287,379 +459,410 @@ def load_production_file(uploaded_file, default_path=None):
 # =========================================================
 # TAB 1 — DIGITAL ARCHIVE & INTEGRITY
 # =========================================================
-reference_hash = ""
-with tab1:
-    st.header("Digital Archive & Integrity Verification")
-    st.write("Unggah arsip untuk menghitung SHA-256 dan memeriksa integritas file.")
+if selected_page == "Digital Archive & Integrity":
+        st.header("Digital Archive & Integrity Verification")
+        st.write("Unggah arsip untuk menghitung SHA-256 dan memeriksa integritas file.")
+        st.caption("File yang diunggah akan tetap tersedia saat berpindah halaman selama sesi browser ini aktif.")
 
-    archive_file = st.file_uploader(
-        "Pilih file arsip Excel atau CSV",
-        type=["xlsx", "xlsm", "xls", "csv"],
-        key="archive_upload"
-    )
-
-    if archive_file is not None:
-        file_bytes = archive_file.getvalue()
-        sha256_hash = hashlib.sha256(file_bytes).hexdigest()
-        st.success("File berhasil diterima.")
-        st.write("Nama file:", archive_file.name)
-        st.write("Ukuran file:", f"{len(file_bytes):,} byte")
-        st.caption("SHA-256")
-        st.code(sha256_hash)
-
-        reference_hash = st.text_input(
-            "Hash SHA-256 tepercaya untuk dibandingkan",
-            placeholder="Tempelkan hash referensi di sini"
+        archive_file = st.file_uploader(
+            "Pilih file arsip Excel atau CSV",
+            type=["xlsx", "xlsm", "xls", "csv"],
+            key="archive_upload_widget",
+            on_change=persist_archive_upload,
         )
-        if reference_hash.strip():
-            if sha256_hash.lower() == reference_hash.strip().lower():
-                st.success("Hash cocok dengan referensi.")
-            else:
-                st.error("Hash tidak cocok dengan referensi.")
 
-        st.caption(
-            "Waktu pemeriksaan: "
-            + datetime.now().astimezone().strftime("%Y-%m-%d %H:%M:%S %Z")
-        )
-        st.divider()
-        st.subheader("Simpan hash awal ke cloud")
-        cloud_client = None
-        cloud_error = None
-        try:
-            cloud_client = get_cloud_client()
-        except Exception as exc:
-            cloud_error = str(exc)
+        if st.session_state.get("archive_upload_widget") is not None:
+            uploaded_now = st.session_state["archive_upload_widget"]
+            archive_file = StoredUpload(uploaded_now.name, uploaded_now.getvalue())
+            st.session_state["saved_archive_name"] = uploaded_now.name
+            st.session_state["saved_archive_bytes"] = uploaded_now.getvalue()
+        elif st.session_state.get("saved_archive_bytes") is not None:
+            archive_file = StoredUpload(
+                st.session_state.get("saved_archive_name", "uploaded_file.csv"),
+                st.session_state["saved_archive_bytes"],
+            )
 
-        if cloud_client is None:
-            if cloud_error:
-                st.error(f"Koneksi cloud gagal disiapkan: {cloud_error}")
-            else:
-                st.warning(
-                    "Cloud belum dikonfigurasi. Hash baru terlihat di sesi ini dan belum tersimpan permanen. "
-                    "Tambahkan SUPABASE_URL dan SUPABASE_SERVICE_ROLE_KEY di Streamlit Secrets atau environment."
-                )
-        else:
-            try:
-                existing_record = find_cloud_record(cloud_client, archive_file.name)
-                if existing_record:
-                    if existing_record["sha256"].lower() == sha256_hash.lower():
-                        st.success("File ini sudah terdaftar di cloud dan hash-nya cocok dengan hash awal.")
-                    else:
-                        st.error(
-                            "Nama file ini sudah memiliki hash awal yang berbeda di cloud. "
-                            "Hash awal tidak ditimpa otomatis. Periksa file sebelum menggunakannya."
-                        )
-                        st.caption(f"Hash terdaftar: {existing_record['sha256']}")
+        if archive_file is not None:
+            file_bytes = archive_file.getvalue()
+            sha256_hash = hashlib.sha256(file_bytes).hexdigest()
+            st.success("File berhasil diterima.")
+            st.write("Nama file:", archive_file.name)
+            st.write("Ukuran file:", f"{len(file_bytes):,} byte")
+            st.caption("SHA-256")
+            st.code(sha256_hash)
+
+            reference_hash = st.text_input(
+                "Hash SHA-256 tepercaya untuk dibandingkan",
+                placeholder="Tempelkan hash referensi di sini",
+                value=st.session_state.get("trusted_reference_hash", ""),
+                key="trusted_reference_hash_input",
+                on_change=persist_reference_hash,
+            )
+            st.session_state["trusted_reference_hash"] = reference_hash
+            if reference_hash.strip():
+                if sha256_hash.lower() == reference_hash.strip().lower():
+                    st.success("Hash cocok dengan referensi.")
                 else:
-                    st.caption("File belum terdaftar. Simpan hash ini sebagai hash awal tepercaya.")
-                    if st.button("Simpan hash awal ke cloud", key="save_initial_cloud_hash"):
-                        status, record = save_initial_hash(
-                            cloud_client, archive_file.name, sha256_hash, len(file_bytes)
-                        )
-                        if status == "saved":
-                            st.success("Hash awal berhasil disimpan di cloud dan tidak akan ditimpa otomatis.")
-                        elif status == "same":
-                            st.success("Hash yang sama sudah tercatat di cloud.")
-                        else:
-                            st.error("Penyimpanan ditolak: nama file sudah terdaftar dengan isi berbeda.")
+                    st.error("Hash tidak cocok dengan referensi.")
+
+            st.caption(
+                "Waktu pemeriksaan: "
+                + datetime.now().astimezone().strftime("%Y-%m-%d %H:%M:%S %Z")
+            )
+            st.divider()
+            st.subheader("Simpan hash awal ke cloud")
+            cloud_client = None
+            cloud_error = None
+            try:
+                cloud_client = get_cloud_client()
             except Exception as exc:
-                st.error(f"Tidak dapat memeriksa registry cloud: {exc}")
-                st.caption("Pastikan tabel file_hash_registry sudah dibuat dan kredensial cloud benar.")
+                cloud_error = str(exc)
+
+            if cloud_client is None:
+                if cloud_error:
+                    st.error(f"Koneksi cloud gagal disiapkan: {cloud_error}")
+                else:
+                    st.warning(
+                        "Cloud belum dikonfigurasi. Hash baru terlihat di sesi ini dan belum tersimpan permanen. "
+                        "Tambahkan SUPABASE_URL dan SUPABASE_SERVICE_ROLE_KEY di Streamlit Secrets atau environment."
+                    )
+            else:
+                try:
+                    existing_record = find_cloud_record(cloud_client, archive_file.name)
+                    if existing_record:
+                        if existing_record["sha256"].lower() == sha256_hash.lower():
+                            st.success("File ini sudah terdaftar di cloud dan hash-nya cocok dengan hash awal.")
+                        else:
+                            st.error(
+                                "Nama file ini sudah memiliki hash awal yang berbeda di cloud. "
+                                "Hash awal tidak ditimpa otomatis. Periksa file sebelum menggunakannya."
+                            )
+                            st.caption(f"Hash terdaftar: {existing_record['sha256']}")
+                    else:
+                        st.caption("File belum terdaftar. Simpan hash ini sebagai hash awal tepercaya.")
+                        if st.button("Simpan hash awal ke cloud", key="save_initial_cloud_hash"):
+                            status, record = save_initial_hash(
+                                cloud_client, archive_file.name, sha256_hash, len(file_bytes)
+                            )
+                            if status == "saved":
+                                st.success("Hash awal berhasil disimpan di cloud dan tidak akan ditimpa otomatis.")
+                            elif status == "same":
+                                st.success("Hash yang sama sudah tercatat di cloud.")
+                            else:
+                                st.error("Penyimpanan ditolak: nama file sudah terdaftar dengan isi berbeda.")
+                except Exception as exc:
+                    st.error(f"Tidak dapat memeriksa registry cloud: {exc}")
+                    st.caption("Pastikan tabel file_hash_registry sudah dibuat dan kredensial cloud benar.")
 
 
 # =========================================================
 # TAB 2 — PRODUCTION ANALYTICS
 # =========================================================
-with tab2:
-    st.header("Production Analytics")
-    st.write(
-        "Tab ini memakai file yang sama dengan Tab 1. Upload cukup sekali, lalu "
-        "hasil verifikasi integritas menjadi gerbang sebelum analisis produksi."
-    )
+if selected_page == "Production Analytics":
+        st.header("Production Analytics & Anomaly Detection")
+        st.write(
+            "Tab ini memakai file yang sama dengan Tab 1. Upload cukup sekali, lalu "
+            "hasil verifikasi integritas menjadi gerbang sebelum analisis produksi."
+        )
 
-    production_file = archive_file
-    use_default = False
-    df = None
+        production_file = archive_file
+        use_default = False
+        df = None
 
-    if production_file is not None:
-        file_bytes = production_file.getvalue()
-        production_hash = hashlib.sha256(file_bytes).hexdigest()
-        integrity_allowed = True
-        verification_status = "unverified"
-        cloud_client = None
-        cloud_error = None
+        if production_file is not None:
+            file_bytes = production_file.getvalue()
+            production_hash = hashlib.sha256(file_bytes).hexdigest()
+            integrity_allowed = True
+            verification_status = "unverified"
+            cloud_client = None
+            cloud_error = None
 
-        if reference_hash.strip():
-            if production_hash.lower() == reference_hash.strip().lower():
-                verification_status = "match_manual"
-                st.success("Verifikasi Tab 1: SHA-256 cocok dengan referensi yang dimasukkan.")
-            else:
-                verification_status = "mismatch_manual"
-                integrity_allowed = False
-                st.error("ANALISIS DIBLOKIR: SHA-256 file tidak cocok dengan referensi di Tab 1.")
-
-        try:
-            cloud_client = get_cloud_client()
-        except Exception as exc:
-            cloud_error = str(exc)
-
-        if integrity_allowed:
-            if cloud_client is None:
-                if cloud_error:
-                    st.error(f"Validasi registry cloud gagal: {cloud_error}")
+            if reference_hash.strip():
+                if production_hash.lower() == reference_hash.strip().lower():
+                    verification_status = "match_manual"
+                    st.success("Verifikasi Tab 1: SHA-256 cocok dengan referensi yang dimasukkan.")
+                else:
+                    verification_status = "mismatch_manual"
                     integrity_allowed = False
-                elif verification_status != "match_manual":
-                    st.warning(
-                        "Status file BELUM TERVERIFIKASI: registry cloud belum tersedia dan "
-                        "hash referensi tepercaya belum cocok/dimasukkan. Demi keamanan, "
-                        "analisis normal tidak dibuka otomatis."
-                    )
-                    allow_unverified = st.checkbox(
-                        "Saya memahami file belum terverifikasi dan ingin menjalankan analisis terbatas (mode demo)",
-                        value=False,
-                        key="allow_unverified_production"
-                    )
-                    integrity_allowed = allow_unverified
-                    if allow_unverified:
-                        verification_status = "unverified_demo"
-                        st.warning("Mode demo aktif: hasil analisis bukan berarti file telah dinyatakan aman.")
-            else:
-                try:
-                    cloud_allowed, cloud_status, record = validate_file_against_cloud(
-                        cloud_client, production_file.name, production_hash
-                    )
-                    if cloud_status == "match":
-                        verification_status = "match_cloud"
-                        st.success("Verifikasi integritas berhasil: hash cocok dengan hash tepercaya di cloud.")
-                    elif cloud_status == "mismatch":
-                        verification_status = "mismatch_cloud"
+                    st.error("ANALISIS DIBLOKIR: SHA-256 file tidak cocok dengan referensi di Tab 1.")
+
+            try:
+                cloud_client = get_cloud_client()
+            except Exception as exc:
+                cloud_error = str(exc)
+
+            if integrity_allowed:
+                if cloud_client is None:
+                    if cloud_error:
+                        st.error(f"Validasi registry cloud gagal: {cloud_error}")
                         integrity_allowed = False
-                        st.error(
-                            "ANALISIS DIBLOKIR: nama file ini terdaftar di cloud, tetapi isi file "
-                            "berbeda dari hash tepercaya. Periksa versi file atau minta otorisasi pemilik data."
-                        )
-                        st.caption(f"Hash tepercaya: {record['sha256']}")
-                        st.caption(f"Hash file saat ini: {production_hash}")
-                    elif verification_status == "match_manual":
-                        st.info("Referensi manual cocok; file dapat dianalisis meskipun belum terdaftar di cloud.")
-                    else:
+                    elif verification_status != "match_manual":
                         st.warning(
-                            "File belum memiliki hash tepercaya di cloud. Simpan hash awal melalui Tab 1 "
-                            "setelah memastikan file ini memang merupakan versi resmi."
+                            "Status file BELUM TERVERIFIKASI: registry cloud belum tersedia dan "
+                            "hash referensi tepercaya belum cocok/dimasukkan. Demi keamanan, "
+                            "analisis normal tidak dibuka otomatis."
                         )
                         allow_unverified = st.checkbox(
-                            "Lanjutkan analisis terbatas untuk file yang belum terdaftar (mode demo)",
+                            "Saya memahami file belum terverifikasi dan ingin menjalankan analisis terbatas (mode demo)",
                             value=False,
-                            key="allow_unregistered_production"
+                            key="allow_unverified_production"
                         )
                         integrity_allowed = allow_unverified
                         if allow_unverified:
                             verification_status = "unverified_demo"
-                            st.warning("Mode demo aktif: file belum terverifikasi oleh registry.")
-                except Exception as exc:
-                    st.error(f"Validasi registry cloud gagal; analisis dihentikan demi keamanan: {exc}")
-                    integrity_allowed = False
-
-        if integrity_allowed:
-            try:
-                df, source_sheet = load_production_file(production_file)
-                st.success(f"File yang sama dari Tab 1 berhasil dibaca. Sumber data: {source_sheet}")
-                st.caption(f"SHA-256 sumber analisis: {production_hash}")
-                if verification_status.startswith("match"):
-                    st.caption("Status integritas: terverifikasi cocok.")
+                            st.warning("Mode demo aktif: hasil analisis bukan berarti file telah dinyatakan aman.")
                 else:
-                    st.caption("Status integritas: BELUM TERVERIFIKASI — gunakan hasil dengan kehati-hatian.")
-            except Exception as exc:
-                st.error(f"File belum berhasil diproses: {exc}")
-                st.info(
-                    "Format yang didukung: tabel long (produk, satuan, tahun, produksi), "
-                    "format wide dengan kolom tahun, atau workbook dengan header bertingkat."
-                )
-    else:
-        st.info("Upload file di Tab 1 terlebih dahulu. Tab 2 akan menggunakan file yang sama tanpa upload ulang.")
-        default_path = Path(__file__).parent / "data_produksi_bersih.csv"
-        if default_path.exists():
-            use_default = st.checkbox(
-                "Gunakan data demo lokal karena belum ada file yang di-upload di Tab 1",
-                value=False,
-                key="use_default_production_demo"
-            )
-            if use_default:
+                    try:
+                        cloud_allowed, cloud_status, record = validate_file_against_cloud(
+                            cloud_client, production_file.name, production_hash
+                        )
+                        if cloud_status == "match":
+                            verification_status = "match_cloud"
+                            st.success("Verifikasi integritas berhasil: hash cocok dengan hash tepercaya di cloud.")
+                        elif cloud_status == "mismatch":
+                            verification_status = "mismatch_cloud"
+                            integrity_allowed = False
+                            st.error(
+                                "ANALISIS DIBLOKIR: nama file ini terdaftar di cloud, tetapi isi file "
+                                "berbeda dari hash tepercaya. Periksa versi file atau minta otorisasi pemilik data."
+                            )
+                            st.caption(f"Hash tepercaya: {record['sha256']}")
+                            st.caption(f"Hash file saat ini: {production_hash}")
+                        elif verification_status == "match_manual":
+                            st.info("Referensi manual cocok; file dapat dianalisis meskipun belum terdaftar di cloud.")
+                        else:
+                            st.warning(
+                                "File belum memiliki hash tepercaya di cloud. Simpan hash awal melalui Tab 1 "
+                                "setelah memastikan file ini memang merupakan versi resmi."
+                            )
+                            allow_unverified = st.checkbox(
+                                "Lanjutkan analisis terbatas untuk file yang belum terdaftar (mode demo)",
+                                value=False,
+                                key="allow_unregistered_production"
+                            )
+                            integrity_allowed = allow_unverified
+                            if allow_unverified:
+                                verification_status = "unverified_demo"
+                                st.warning("Mode demo aktif: file belum terverifikasi oleh registry.")
+                    except Exception as exc:
+                        st.error(f"Validasi registry cloud gagal; analisis dihentikan demi keamanan: {exc}")
+                        integrity_allowed = False
+
+            if integrity_allowed:
                 try:
-                    df, source_sheet = load_production_file(None, default_path=default_path)
-                    st.warning("Data demo lokal digunakan; data ini tidak melalui verifikasi file Tab 1.")
+                    df, source_sheet = load_production_file(production_file)
+                    st.success(f"File yang sama dari Tab 1 berhasil dibaca. Sumber data: {source_sheet}")
+                    st.caption(f"SHA-256 sumber analisis: {production_hash}")
+                    if verification_status.startswith("match"):
+                        st.caption("Status integritas: terverifikasi cocok.")
+                    else:
+                        st.caption("Status integritas: BELUM TERVERIFIKASI — gunakan hasil dengan kehati-hatian.")
                 except Exception as exc:
-                    st.warning(f"Data demo belum bisa dibaca: {exc}")
-
-    if df is not None and not df.empty:
-        df = df.copy()
-        df["tahun"] = pd.to_numeric(df["tahun"], errors="coerce")
-        df["produksi"] = pd.to_numeric(df["produksi"], errors="coerce")
-        df = df.dropna(subset=["produk", "tahun", "produksi"]).copy()
-        df = df[df["tahun"] % 1 == 0].copy()
-        df["tahun"] = df["tahun"].astype(int)
-        df["produk"] = df["produk"].astype(str).str.strip()
-        df["satuan"] = df["satuan"].fillna("Tidak diketahui").astype(str).str.strip()
-        df = df[(df["produk"] != "") & (df["produk"].str.lower() != "nan")]
-
-        if df.empty:
-            st.warning("File terbaca, tetapi tidak ada baris produksi valid.")
+                    st.error(f"File belum berhasil diproses: {exc}")
+                    st.info(
+                        "Format yang didukung: tabel long (produk, satuan, tahun, produksi), "
+                        "format wide dengan kolom tahun, atau workbook dengan header bertingkat."
+                    )
         else:
-            st.success(f"Berhasil menyiapkan {len(df)} catatan produksi.")
-            st.caption(f"Tahun terdeteksi: {df['tahun'].min()}–{df['tahun'].max()}")
-
-            st.sidebar.header("Filter Produksi")
-            min_year, max_year = int(df["tahun"].min()), int(df["tahun"].max())
-            if min_year < max_year:
-                year_range = st.sidebar.slider(
-                    "Rentang tahun",
-                    min_value=min_year,
-                    max_value=max_year,
-                    value=(min_year, max_year),
-                    step=1,
-                    key="production_year_range"
+            st.info("Upload file di Tab 1 terlebih dahulu. Tab 2 akan menggunakan file yang sama tanpa upload ulang.")
+            default_path = Path(__file__).parent / "data_produksi_bersih.csv"
+            if default_path.exists():
+                use_default = st.checkbox(
+                    "Gunakan data demo lokal karena belum ada file yang di-upload di Tab 1",
+                    value=False,
+                    key="use_default_production_demo"
                 )
+                if use_default:
+                    try:
+                        df, source_sheet = load_production_file(None, default_path=default_path)
+                        st.warning("Data demo lokal digunakan; data ini tidak melalui verifikasi file Tab 1.")
+                    except Exception as exc:
+                        st.warning(f"Data demo belum bisa dibaca: {exc}")
+
+        if df is not None and not df.empty:
+            df = df.copy()
+            df["tahun"] = pd.to_numeric(df["tahun"], errors="coerce")
+            df["produksi"] = pd.to_numeric(df["produksi"], errors="coerce")
+            df = df.dropna(subset=["produk", "tahun", "produksi"]).copy()
+            df = df[df["tahun"] % 1 == 0].copy()
+            df["tahun"] = df["tahun"].astype(int)
+            df["produk"] = df["produk"].astype(str).str.strip()
+            df["satuan"] = df["satuan"].fillna("Tidak diketahui").astype(str).str.strip()
+            df = df[(df["produk"] != "") & (df["produk"].str.lower() != "nan")]
+
+            if df.empty:
+                st.warning("File terbaca, tetapi tidak ada baris produksi valid.")
             else:
-                year_range = (min_year, max_year)
-                st.sidebar.write("Tahun data:", min_year)
+                st.success(f"Berhasil menyiapkan {len(df)} catatan produksi.")
+                st.caption(f"Tahun terdeteksi: {df['tahun'].min()}–{df['tahun'].max()}")
 
-            product_options = sorted(df["produk"].unique().tolist())
-            selected_products = st.sidebar.multiselect(
-                "Pilih produk",
-                options=product_options,
-                default=product_options,
-                key="production_products"
-            )
-
-            filtered = df[
-                df["tahun"].between(year_range[0], year_range[1])
-                & df["produk"].isin(selected_products)
-            ].copy()
-
-            if filtered.empty:
-                st.warning("Tidak ada data untuk filter yang dipilih.")
-            else:
-                c1, c2, c3 = st.columns(3)
-                c1.metric("Jumlah produk", filtered["produk"].nunique())
-                c2.metric("Jumlah catatan", len(filtered))
-                c3.metric("Rentang tahun", f"{filtered['tahun'].min()}–{filtered['tahun'].max()}")
-
-                st.info(
-                    "Produksi ditampilkan menurut satuannya. Nilai dengan satuan berbeda "
-                    "(misalnya Liter, Kg, dan Zak) tidak dijumlahkan menjadi satu total."
-                )
-
-                st.subheader("Tren Produksi per Produk")
-                trend = filtered.groupby(
-                    ["tahun", "produk", "satuan"], as_index=False
-                )["produksi"].sum()
-                fig = px.line(
-                    trend, x="tahun", y="produksi", color="produk", markers=True,
-                    hover_data=["satuan"],
-                    labels={
-                        "tahun": "Tahun", "produksi": "Jumlah produksi",
-                        "produk": "Produk", "satuan": "Satuan"
-                    }
-                )
-                st.plotly_chart(fig, use_container_width=True)
-
-                st.subheader("Perbandingan Produksi")
-                available_years = sorted(filtered["tahun"].unique().tolist(), reverse=True)
-                comparison_year = st.selectbox(
-                    "Pilih tahun",
-                    available_years,
-                    key="production_comparison_year"
-                )
-                comparison = filtered[filtered["tahun"] == comparison_year]
-                bar = px.bar(
-                    comparison, x="produk", y="produksi", color="satuan",
-                    labels={
-                        "produk": "Produk", "produksi": "Jumlah produksi",
-                        "satuan": "Satuan"
-                    },
-                    title=f"Produksi Tahun {comparison_year}"
-                )
-                st.plotly_chart(bar, use_container_width=True)
-
-                st.subheader("Pemeriksaan Perubahan Produksi")
-                threshold = st.slider(
-                    "Tandai perubahan tahunan di atas (%)",
-                    min_value=10, max_value=200, value=50, step=10,
-                    key="production_change_threshold"
-                )
-                yearly = filtered.groupby(
-                    ["produk", "satuan", "tahun"], as_index=False
-                )["produksi"].sum().sort_values(["produk", "satuan", "tahun"])
-                yearly["produksi_sebelumnya"] = yearly.groupby(
-                    ["produk", "satuan"]
-                )["produksi"].shift(1)
-                yearly["perubahan_persen"] = (
-                    (yearly["produksi"] - yearly["produksi_sebelumnya"])
-                    / yearly["produksi_sebelumnya"].where(yearly["produksi_sebelumnya"] != 0)
-                    * 100
-                )
-
-                def alasan_trigger(row):
-                    sebelumnya = row["produksi_sebelumnya"]
-                    sekarang = row["produksi"]
-                    perubahan = row["perubahan_persen"]
-                    if pd.isna(sebelumnya):
-                        return "Belum ada data tahun sebelumnya untuk pembanding."
-                    if sebelumnya == 0 and sekarang != 0:
-                        return "Produksi berubah dari 0 menjadi nilai nonzero; persentase perubahan tidak dapat dihitung."
-                    if pd.isna(perubahan):
-                        return "Perubahan persentase tidak dapat dihitung dari data yang tersedia."
-                    if abs(perubahan) > threshold:
-                        arah = "naik" if perubahan > 0 else "turun"
-                        return f"Produksi {arah} {abs(perubahan):.1f}% dibanding tahun sebelumnya (ambang {threshold}%)."
-                    return "Tidak melewati ambang perubahan yang ditetapkan."
-
-                yearly["alasan_tinjau"] = yearly.apply(alasan_trigger, axis=1)
-                yearly["perlu_ditinjau"] = (
-                    (yearly["perubahan_persen"].abs() > threshold)
-                    | ((yearly["produksi_sebelumnya"] == 0) & (yearly["produksi"] != 0))
-                )
-                alerts = yearly[yearly["perlu_ditinjau"]].copy()
-                if alerts.empty:
-                    st.success("Tidak ada nilai yang melewati aturan trigger pada data terpilih.")
+                st.sidebar.markdown("---")
+                st.sidebar.subheader("Filter Produksi")
+                min_year, max_year = int(df["tahun"].min()), int(df["tahun"].max())
+                if min_year < max_year:
+                    year_range = st.sidebar.slider(
+                        "Rentang tahun",
+                        min_value=min_year,
+                        max_value=max_year,
+                        value=(min_year, max_year),
+                        step=1,
+                        key="production_year_range"
+                    )
                 else:
-                    st.warning(f"Ditemukan {len(alerts)} catatan yang perlu ditinjau.")
-                    st.dataframe(
-                        alerts[["produk", "satuan", "tahun", "produksi_sebelumnya", "produksi", "perubahan_persen", "alasan_tinjau"]],
-                        use_container_width=True,
-                        hide_index=True
-                    )
-                st.caption(
-                    f"Metode: aturan perubahan tahunan. Trigger aktif jika perubahan absolut melebihi {threshold}% "
-                    "atau produksi berubah dari 0 menjadi nilai nonzero. Ini hanya penanda untuk pemeriksaan admin, "
-                    "bukan bukti otomatis adanya kesalahan, manipulasi, atau kecurangan."
+                    year_range = (min_year, max_year)
+                    st.sidebar.write("Tahun data:", min_year)
+
+                product_options = sorted(df["produk"].unique().tolist())
+                selected_products = st.sidebar.multiselect(
+                    "Pilih produk",
+                    options=product_options,
+                    default=product_options,
+                    key="production_products"
                 )
 
-                with st.expander("Lihat data produksi yang sudah distandardisasi"):
-                    st.dataframe(
-                        filtered.sort_values(["tahun", "produk"]),
-                        use_container_width=True,
-                        hide_index=True
+                filtered = df[
+                    df["tahun"].between(year_range[0], year_range[1])
+                    & df["produk"].isin(selected_products)
+                ].copy()
+
+                if filtered.empty:
+                    st.warning("Tidak ada data untuk filter yang dipilih.")
+                else:
+                    c1, c2, c3 = st.columns(3)
+                    c1.metric("Jumlah produk", filtered["produk"].nunique())
+                    c2.metric("Jumlah catatan", len(filtered))
+                    c3.metric("Rentang tahun", f"{filtered['tahun'].min()}–{filtered['tahun'].max()}")
+
+                    st.info(
+                        "Produksi ditampilkan menurut satuannya. Nilai dengan satuan berbeda "
+                        "(misalnya Liter, Kg, dan Zak) tidak dijumlahkan menjadi satu total."
                     )
 
-                csv_data = filtered.to_csv(index=False).encode("utf-8-sig")
-                st.download_button(
-                    "Unduh data hasil standardisasi (CSV)",
-                    data=csv_data,
-                    file_name="data_produksi_standard.csv",
-                    mime="text/csv"
-                )
+                    st.subheader("Tren Produksi per Produk")
+                    trend = filtered.groupby(
+                        ["tahun", "produk", "satuan"], as_index=False
+                    )["produksi"].sum()
+                    fig = px.line(
+                        trend, x="tahun", y="produksi", color="produk", markers=True,
+                        hover_data=["satuan"],
+                        labels={
+                            "tahun": "Tahun", "produksi": "Jumlah produksi",
+                            "produk": "Produk", "satuan": "Satuan"
+                        }
+                    )
+                    fig.update_layout(
+                        template="plotly_white", paper_bgcolor="rgba(255,255,255,0)",
+                        plot_bgcolor="rgba(255,255,255,0.72)", font=dict(family="DM Sans, sans-serif", color="#35533d"),
+                        margin=dict(l=15, r=15, t=35, b=15), legend_title_text="Produk",
+                    )
+                    fig.update_xaxes(showgrid=False, linecolor="#e5ddef")
+                    fig.update_yaxes(gridcolor="#e6eee4", zerolinecolor="#e5ddef")
+                    st.plotly_chart(fig, use_container_width=True)
+
+                    st.subheader("Perbandingan Produksi")
+                    available_years = sorted(filtered["tahun"].unique().tolist(), reverse=True)
+                    comparison_year = st.selectbox(
+                        "Pilih tahun",
+                        available_years,
+                        key="production_comparison_year"
+                    )
+                    comparison = filtered[filtered["tahun"] == comparison_year]
+                    bar = px.bar(
+                        comparison, x="produk", y="produksi", color="satuan",
+                        labels={
+                            "produk": "Produk", "produksi": "Jumlah produksi",
+                            "satuan": "Satuan"
+                        },
+                        title=f"Produksi Tahun {comparison_year}"
+                    )
+                    bar.update_layout(
+                        template="plotly_white", paper_bgcolor="rgba(255,255,255,0)",
+                        plot_bgcolor="rgba(255,255,255,0.72)", font=dict(family="DM Sans, sans-serif", color="#35533d"),
+                        margin=dict(l=15, r=15, t=45, b=15), showlegend=False,
+                    )
+                    bar.update_xaxes(showgrid=False, linecolor="#e5ddef")
+                    bar.update_yaxes(gridcolor="#e6eee4", zerolinecolor="#e5ddef")
+                    st.plotly_chart(bar, use_container_width=True)
+
+                    st.subheader("Pemeriksaan Perubahan Produksi")
+                    threshold = st.slider(
+                        "Tandai perubahan tahunan di atas (%)",
+                        min_value=10, max_value=200, value=50, step=10,
+                        key="production_change_threshold"
+                    )
+                    yearly = filtered.groupby(
+                        ["produk", "satuan", "tahun"], as_index=False
+                    )["produksi"].sum().sort_values(["produk", "satuan", "tahun"])
+                    yearly["produksi_sebelumnya"] = yearly.groupby(
+                        ["produk", "satuan"]
+                    )["produksi"].shift(1)
+                    yearly["perubahan_persen"] = (
+                        (yearly["produksi"] - yearly["produksi_sebelumnya"])
+                        / yearly["produksi_sebelumnya"].where(yearly["produksi_sebelumnya"] != 0)
+                        * 100
+                    )
+
+                    def alasan_trigger(row):
+                        sebelumnya = row["produksi_sebelumnya"]
+                        sekarang = row["produksi"]
+                        perubahan = row["perubahan_persen"]
+                        if pd.isna(sebelumnya):
+                            return "Belum ada data tahun sebelumnya untuk pembanding."
+                        if sebelumnya == 0 and sekarang != 0:
+                            return "Produksi berubah dari 0 menjadi nilai nonzero; persentase perubahan tidak dapat dihitung."
+                        if pd.isna(perubahan):
+                            return "Perubahan persentase tidak dapat dihitung dari data yang tersedia."
+                        if abs(perubahan) > threshold:
+                            arah = "naik" if perubahan > 0 else "turun"
+                            return f"Produksi {arah} {abs(perubahan):.1f}% dibanding tahun sebelumnya (ambang {threshold}%)."
+                        return "Tidak melewati ambang perubahan yang ditetapkan."
+
+                    yearly["alasan_tinjau"] = yearly.apply(alasan_trigger, axis=1)
+                    yearly["perlu_ditinjau"] = (
+                        (yearly["perubahan_persen"].abs() > threshold)
+                        | ((yearly["produksi_sebelumnya"] == 0) & (yearly["produksi"] != 0))
+                    )
+                    alerts = yearly[yearly["perlu_ditinjau"]].copy()
+                    if alerts.empty:
+                        st.success("Tidak ada nilai yang melewati aturan trigger pada data terpilih.")
+                    else:
+                        st.warning(f"Ditemukan {len(alerts)} catatan yang perlu ditinjau.")
+                        st.dataframe(
+                            alerts[["produk", "satuan", "tahun", "produksi_sebelumnya", "produksi", "perubahan_persen", "alasan_tinjau"]],
+                            use_container_width=True,
+                            hide_index=True
+                        )
+                    st.caption(
+                        f"Metode: aturan perubahan tahunan. Trigger aktif jika perubahan absolut melebihi {threshold}% "
+                        "atau produksi berubah dari 0 menjadi nilai nonzero. Ini hanya penanda untuk pemeriksaan admin, "
+                        "bukan bukti otomatis adanya kesalahan, manipulasi, atau kecurangan."
+                    )
+
+                    with st.expander("Lihat data produksi yang sudah distandardisasi"):
+                        st.dataframe(
+                            filtered.sort_values(["tahun", "produk"]),
+                            use_container_width=True,
+                            hide_index=True
+                        )
+
+                    csv_data = filtered.to_csv(index=False).encode("utf-8-sig")
+                    st.download_button(
+                        "Unduh data hasil standardisasi (CSV)",
+                        data=csv_data,
+                        file_name="data_produksi_standard.csv",
+                        mime="text/csv"
+                    )
 
 
 # =========================================================
 # TAB 3 — NETWORK LOG FORENSICS & AUDIT
 # =========================================================
-with tab3:
-    st.header("Network Log Forensics & Audit")
-    st.write(
-        "Area ini untuk integrasi modul log jaringan dan deteksi anomali aktivitas."
-    )
-    st.info(
-        "Tempat integrasi modul rekan: tabel log, filter IP, deteksi login gagal, "
-        "lonjakan unduhan, Isolation Forest, dan ringkasan alert."
-    )
+if selected_page == "Network Log Forensics":
+        st.header("Network Log Forensics & Audit")
+        st.write(
+            "Area ini untuk integrasi modul log jaringan dan deteksi anomali aktivitas."
+        )
+        st.info(
+            "Tempat integrasi modul rekan: tabel log, filter IP, deteksi login gagal, "
+            "lonjakan unduhan, Isolation Forest, dan ringkasan alert."
+        )
