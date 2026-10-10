@@ -18,5 +18,5 @@ Proyek ini dirancang untuk membantu pengamanan arsip digital dan data operasiona
 * Security & Crypto: Hashlib (SHA-256 / HMAC)
 
 ## Tim Penyusun (Mahasiswa Prodi Sains Data)
-Audy Alycia (24031554179)
-Rizqi Wahyu Gusniadi (24031554203)
+* Audy Alycia (24031554179)
+* Rizqi Wahyu Gusniadi (24031554203)
