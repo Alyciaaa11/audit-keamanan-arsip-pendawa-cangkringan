@@ -1,7 +1,8 @@
 # Final Project Berdampak VINIX7 - Divisi Cybercrime & Digital Forensic
 Prototype Dashboard Audit Keamanan Arsip Digital, Deteksi Anomali Log (Isolation Forest), dan Verifikasi Integritas Data (SHA-256) untuk Mitra CV. Pendawa Kencana Multi Farm, Desa Cangkringan
-**Mitra:** CV. Pendawa Kencana Multi Farm (Cangkringan, Sleman, DIY)  & VINIX7
-**Program:** Studi Independen / Final Project
+
+* **Mitra:** CV. Pendawa Kencana Multi Farm (Cangkringan, Sleman, DIY)  & VINIX7
+* **Program:** Studi Independen / Final Project
 
 ## Deskripsi Proyek
 Proyek ini dirancang untuk membantu pengamanan arsip digital dan data operasional bioteknologi/agribisnis pada CV. Pendawa Kencana Multi Farm. Sistem ini mengintegrasikan 3 pilar keamanan digital utama:
@@ -15,3 +16,7 @@ Proyek ini dirancang untuk membantu pengamanan arsip digital dan data operasiona
 * Data Processing: Pandas, NumPy
 * Machine Learning: Scikit-Learn (Isolation Forest)
 * Security & Crypto: Hashlib (SHA-256 / HMAC)
+
+## Tim Penyusun (Mahasiswa Prodi Sains Data)
+Audy Alycia (24031554179)
+Rizqi Wahyu Gusniadi (24031554203)
