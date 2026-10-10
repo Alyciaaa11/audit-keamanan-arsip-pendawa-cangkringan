@@ -221,3 +221,7 @@ __marimo__/
 .streamlit/secrets.toml
 
 .agents/
+
+
+.streamlit/secrets.toml
+.env

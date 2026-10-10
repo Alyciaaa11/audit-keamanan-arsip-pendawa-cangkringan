@@ -9,7 +9,7 @@ import plotly.express as px
 import streamlit as st
 
 st.set_page_config(page_title="Agribusiness Secure Archive", layout="wide")
-st.title("Agribusiness Secure Archive")
+st.title("🌱 Agribusiness Secure Archive")
 st.caption("Secure Digital Archive & Anomaly Detection Dashboard for Agribusiness Data")
 
 
@@ -169,6 +169,7 @@ def parse_wide_excel_sheet(raw):
     if product_header_row is None:
         return None
 
+    year_row = None
     year_columns = {}
     for r in range(product_header_row + 1, min(product_header_row + 5, len(raw))):
         found = {}
@@ -286,6 +287,7 @@ def load_production_file(uploaded_file, default_path=None):
 # =========================================================
 # TAB 1 — DIGITAL ARCHIVE & INTEGRITY
 # =========================================================
+reference_hash = ""
 with tab1:
     st.header("Digital Archive & Integrity Verification")
     st.write("Unggah arsip untuk menghitung SHA-256 dan memeriksa integritas file.")
@@ -369,85 +371,125 @@ with tab1:
 # TAB 2 — PRODUCTION ANALYTICS
 # =========================================================
 with tab2:
-    st.header("Production Analytics & Anomaly Detection")
+    st.header("Production Analytics")
     st.write(
-        "Unggah file asli, file hasil preprocessing, atau file dummy. "
-        "Dashboard akan mencoba mengenali format tabel dan mengubahnya otomatis."
+        "Tab ini memakai file yang sama dengan Tab 1. Upload cukup sekali, lalu "
+        "hasil verifikasi integritas menjadi gerbang sebelum analisis produksi."
     )
 
-    production_file = st.file_uploader(
-        "Pilih dataset produksi untuk dianalisis",
-        type=["xlsx", "xlsm", "xls", "csv"],
-        key="production_upload"
-    )
-
-    use_default = st.checkbox(
-        "Jika tidak mengunggah file, gunakan data_produksi_bersih.csv dari folder aplikasi",
-        value=production_file is None
-    )
-
+    production_file = archive_file
+    use_default = False
     df = None
+
     if production_file is not None:
-        # Validate the original uploaded bytes before parsing or analysing the dataset.
-        production_hash = hashlib.sha256(production_file.getvalue()).hexdigest()
+        file_bytes = production_file.getvalue()
+        production_hash = hashlib.sha256(file_bytes).hexdigest()
+        integrity_allowed = True
+        verification_status = "unverified"
         cloud_client = None
         cloud_error = None
+
+        if reference_hash.strip():
+            if production_hash.lower() == reference_hash.strip().lower():
+                verification_status = "match_manual"
+                st.success("Verifikasi Tab 1: SHA-256 cocok dengan referensi yang dimasukkan.")
+            else:
+                verification_status = "mismatch_manual"
+                integrity_allowed = False
+                st.error("ANALISIS DIBLOKIR: SHA-256 file tidak cocok dengan referensi di Tab 1.")
+
         try:
             cloud_client = get_cloud_client()
         except Exception as exc:
             cloud_error = str(exc)
 
-        integrity_allowed = True
-        if cloud_client is None:
-            if cloud_error:
-                st.error(f"Validasi cloud gagal: {cloud_error}")
-                integrity_allowed = False
+        if integrity_allowed:
+            if cloud_client is None:
+                if cloud_error:
+                    st.error(f"Validasi registry cloud gagal: {cloud_error}")
+                    integrity_allowed = False
+                elif verification_status != "match_manual":
+                    st.warning(
+                        "Status file BELUM TERVERIFIKASI: registry cloud belum tersedia dan "
+                        "hash referensi tepercaya belum cocok/dimasukkan. Demi keamanan, "
+                        "analisis normal tidak dibuka otomatis."
+                    )
+                    allow_unverified = st.checkbox(
+                        "Saya memahami file belum terverifikasi dan ingin menjalankan analisis terbatas (mode demo)",
+                        value=False,
+                        key="allow_unverified_production"
+                    )
+                    integrity_allowed = allow_unverified
+                    if allow_unverified:
+                        verification_status = "unverified_demo"
+                        st.warning("Mode demo aktif: hasil analisis bukan berarti file telah dinyatakan aman.")
             else:
-                st.warning(
-                    "Validasi cloud belum aktif karena kredensial Supabase belum dikonfigurasi. "
-                    "Mode demo mengizinkan analisis, tetapi pemeriksaan nama/hash cloud belum berlaku."
-                )
-        else:
-            try:
-                integrity_allowed, integrity_status, record = validate_file_against_cloud(
-                    cloud_client, production_file.name, production_hash
-                )
-                if integrity_status == "match":
-                    st.success("Integritas terverifikasi: hash cocok dengan catatan awal di cloud.")
-                elif integrity_status == "mismatch":
-                    st.error(
-                        "ANALISIS DIBLOKIR: nama file ini sudah terdaftar di cloud, "
-                        "tetapi hash berbeda dari hash awal. File mungkin telah diubah."
+                try:
+                    cloud_allowed, cloud_status, record = validate_file_against_cloud(
+                        cloud_client, production_file.name, production_hash
                     )
-                    st.caption(f"Hash awal cloud: {record['sha256']}")
-                    st.caption(f"Hash file sekarang: {production_hash}")
-                else:
-                    st.info(
-                        "File dengan nama ini belum tercatat di cloud. Sesuai aturan sistem, "
-                        "file baru boleh dianalisis; unggah juga ke Tab 1 jika ingin mencatat hash awalnya."
-                    )
-            except Exception as exc:
-                st.error(f"Validasi registry cloud gagal; analisis dihentikan demi keamanan: {exc}")
-                integrity_allowed = False
+                    if cloud_status == "match":
+                        verification_status = "match_cloud"
+                        st.success("Verifikasi integritas berhasil: hash cocok dengan hash tepercaya di cloud.")
+                    elif cloud_status == "mismatch":
+                        verification_status = "mismatch_cloud"
+                        integrity_allowed = False
+                        st.error(
+                            "ANALISIS DIBLOKIR: nama file ini terdaftar di cloud, tetapi isi file "
+                            "berbeda dari hash tepercaya. Periksa versi file atau minta otorisasi pemilik data."
+                        )
+                        st.caption(f"Hash tepercaya: {record['sha256']}")
+                        st.caption(f"Hash file saat ini: {production_hash}")
+                    elif verification_status == "match_manual":
+                        st.info("Referensi manual cocok; file dapat dianalisis meskipun belum terdaftar di cloud.")
+                    else:
+                        st.warning(
+                            "File belum memiliki hash tepercaya di cloud. Simpan hash awal melalui Tab 1 "
+                            "setelah memastikan file ini memang merupakan versi resmi."
+                        )
+                        allow_unverified = st.checkbox(
+                            "Lanjutkan analisis terbatas untuk file yang belum terdaftar (mode demo)",
+                            value=False,
+                            key="allow_unregistered_production"
+                        )
+                        integrity_allowed = allow_unverified
+                        if allow_unverified:
+                            verification_status = "unverified_demo"
+                            st.warning("Mode demo aktif: file belum terverifikasi oleh registry.")
+                except Exception as exc:
+                    st.error(f"Validasi registry cloud gagal; analisis dihentikan demi keamanan: {exc}")
+                    integrity_allowed = False
 
         if integrity_allowed:
             try:
                 df, source_sheet = load_production_file(production_file)
-                st.success(f"File berhasil dibaca. Sheet/sumber data: {source_sheet}")
+                st.success(f"File yang sama dari Tab 1 berhasil dibaca. Sumber data: {source_sheet}")
+                st.caption(f"SHA-256 sumber analisis: {production_hash}")
+                if verification_status.startswith("match"):
+                    st.caption("Status integritas: terverifikasi cocok.")
+                else:
+                    st.caption("Status integritas: BELUM TERVERIFIKASI — gunakan hasil dengan kehati-hatian.")
             except Exception as exc:
                 st.error(f"File belum berhasil diproses: {exc}")
                 st.info(
-                    "Dashboard mendukung format long (produk, satuan, tahun, produksi), "
-                    "format wide dengan satu kolom per tahun, dan workbook dengan header "
-                    "bertingkat seperti rekap laporan mitra."
+                    "Format yang didukung: tabel long (produk, satuan, tahun, produksi), "
+                    "format wide dengan kolom tahun, atau workbook dengan header bertingkat."
                 )
-    elif use_default:
+    else:
+        st.info("Upload file di Tab 1 terlebih dahulu. Tab 2 akan menggunakan file yang sama tanpa upload ulang.")
         default_path = Path(__file__).parent / "data_produksi_bersih.csv"
-        try:
-            df, source_sheet = load_production_file(None, default_path=default_path)
-            st.info("Menampilkan data default hasil preprocessing.")
-        except Exception as exc:
-            st.warning(f"Data default belum tersedia atau tidak terbaca: {exc}")
+        if default_path.exists():
+            use_default = st.checkbox(
+                "Gunakan data demo lokal karena belum ada file yang di-upload di Tab 1",
+                value=False,
+                key="use_default_production_demo"
+            )
+            if use_default:
+                try:
+                    df, source_sheet = load_production_file(None, default_path=default_path)
+                    st.warning("Data demo lokal digunakan; data ini tidak melalui verifikasi file Tab 1.")
+                except Exception as exc:
+                    st.warning(f"Data demo belum bisa dibaca: {exc}")
 
     if df is not None and not df.empty:
         df = df.copy()
@@ -548,18 +590,49 @@ with tab2:
                 yearly = filtered.groupby(
                     ["produk", "satuan", "tahun"], as_index=False
                 )["produksi"].sum().sort_values(["produk", "satuan", "tahun"])
+                yearly["produksi_sebelumnya"] = yearly.groupby(
+                    ["produk", "satuan"]
+                )["produksi"].shift(1)
                 yearly["perubahan_persen"] = (
-                    yearly.groupby(["produk", "satuan"])["produksi"].pct_change() * 100
+                    (yearly["produksi"] - yearly["produksi_sebelumnya"])
+                    / yearly["produksi_sebelumnya"].where(yearly["produksi_sebelumnya"] != 0)
+                    * 100
                 )
-                alerts = yearly[yearly["perubahan_persen"].abs() > threshold]
+
+                def alasan_trigger(row):
+                    sebelumnya = row["produksi_sebelumnya"]
+                    sekarang = row["produksi"]
+                    perubahan = row["perubahan_persen"]
+                    if pd.isna(sebelumnya):
+                        return "Belum ada data tahun sebelumnya untuk pembanding."
+                    if sebelumnya == 0 and sekarang != 0:
+                        return "Produksi berubah dari 0 menjadi nilai nonzero; persentase perubahan tidak dapat dihitung."
+                    if pd.isna(perubahan):
+                        return "Perubahan persentase tidak dapat dihitung dari data yang tersedia."
+                    if abs(perubahan) > threshold:
+                        arah = "naik" if perubahan > 0 else "turun"
+                        return f"Produksi {arah} {abs(perubahan):.1f}% dibanding tahun sebelumnya (ambang {threshold}%)."
+                    return "Tidak melewati ambang perubahan yang ditetapkan."
+
+                yearly["alasan_tinjau"] = yearly.apply(alasan_trigger, axis=1)
+                yearly["perlu_ditinjau"] = (
+                    (yearly["perubahan_persen"].abs() > threshold)
+                    | ((yearly["produksi_sebelumnya"] == 0) & (yearly["produksi"] != 0))
+                )
+                alerts = yearly[yearly["perlu_ditinjau"]].copy()
                 if alerts.empty:
-                    st.success("Tidak ditemukan perubahan yang melewati ambang pada data terpilih.")
+                    st.success("Tidak ada nilai yang melewati aturan trigger pada data terpilih.")
                 else:
-                    st.warning(f"Ditemukan {len(alerts)} perubahan yang perlu ditinjau.")
-                    st.dataframe(alerts, use_container_width=True, hide_index=True)
+                    st.warning(f"Ditemukan {len(alerts)} catatan yang perlu ditinjau.")
+                    st.dataframe(
+                        alerts[["produk", "satuan", "tahun", "produksi_sebelumnya", "produksi", "perubahan_persen", "alasan_tinjau"]],
+                        use_container_width=True,
+                        hide_index=True
+                    )
                 st.caption(
-                    "Pemeriksaan perubahan persentase adalah penanda eksploratif, "
-                    "bukan bukti kesalahan atau hasil model machine learning."
+                    f"Metode: aturan perubahan tahunan. Trigger aktif jika perubahan absolut melebihi {threshold}% "
+                    "atau produksi berubah dari 0 menjadi nilai nonzero. Ini hanya penanda untuk pemeriksaan admin, "
+                    "bukan bukti otomatis adanya kesalahan, manipulasi, atau kecurangan."
                 )
 
                 with st.expander("Lihat data produksi yang sudah distandardisasi"):
