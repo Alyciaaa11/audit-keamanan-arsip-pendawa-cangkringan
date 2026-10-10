@@ -2,3 +2,6 @@
    pandas
    scikit-learn
    openpyxl
+   plotly
+   xlrd
+   supabase
