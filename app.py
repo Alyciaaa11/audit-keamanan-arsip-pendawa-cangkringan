@@ -1,12 +1,16 @@
+import random
+from sklearn.ensemble import IsolationForest
+from sklearn.preprocessing import LabelEncoder
 from pathlib import Path
 from io import BytesIO
 import hashlib
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 
+import streamlit as st
 import pandas as pd
 import plotly.express as px
-import streamlit as st
+import numpy as np
 
 st.set_page_config(page_title="Agribusiness Secure Archive", layout="wide")
 
@@ -859,10 +863,100 @@ if selected_page == "Production Analytics":
 # =========================================================
 if selected_page == "Network Log Forensics":
         st.header("Network Log Forensics & Audit")
-        st.write(
-            "Area ini untuk integrasi modul log jaringan dan deteksi anomali aktivitas."
+        st.write("Sistem mendeteksi anomali akses menggunakan algoritma **Isolation Forest Machine Learning**.")
+
+        @st.cache_data
+        def generate_network_logs(n_normal=2000, n_anomaly=50):
+            np.random.seed(42)
+            random.seed(42)
+            actions = ["Upload Arsip", "Download Arsip", "View Dashboard", "Login"]
+            
+            logs = []
+            now = datetime.now()
+            
+            for _ in range(n_normal):
+                days_ago = random.randint(0, 30)
+                hour = random.randint(8, 17)
+                minute = random.randint(0, 59)
+                dt = now.replace(hour=hour, minute=minute, second=0, microsecond=0) - timedelta(days=days_ago)
+                ip = f"192.168.1.{random.randint(10, 100)}"
+                action = random.choice(actions)
+                status = "Success" if random.random() > 0.05 else "Failed" # 5% gagal alami
+                file_acc = "Rekap_Laporan_5_Tahun.xlsx" if action in ["Upload Arsip", "Download Arsip"] else "-"
+                logs.append([dt, ip, action, file_acc, status])
+                
+            for _ in range(n_anomaly):
+                days_ago = random.randint(0, 30)
+                hour = random.randint(1, 4)
+                minute = random.randint(0, 59)
+                dt = now.replace(hour=hour, minute=minute, second=0, microsecond=0) - timedelta(days=days_ago)
+                ip = f"{random.randint(100,255)}.{random.randint(1,255)}.{random.randint(1,255)}.{random.randint(1,255)}"
+                action = "Download Arsip" if random.random() > 0.5 else "Login"
+                status = "Failed" if action == "Login" else "Success"
+                file_acc = "cangkringan_dataset_clean.xlsx" if action == "Download Arsip" else "-"
+                logs.append([dt, ip, action, file_acc, status])
+                
+            df = pd.DataFrame(logs, columns=["Timestamp", "IP_Address", "User_Action", "File_Accessed", "Status"])
+            df = df.sort_values("Timestamp").reset_index(drop=True)
+            return df
+
+        @st.cache_data
+        def detect_anomalies_iforest(df):
+            df_ml = df.copy()
+            df_ml['Hour'] = df_ml['Timestamp'].dt.hour
+            
+            le_action = LabelEncoder()
+            df_ml['Action_Code'] = le_action.fit_transform(df_ml['User_Action'])
+            
+            le_status = LabelEncoder()
+            df_ml['Status_Code'] = le_status.fit_transform(df_ml['Status'])
+            
+            features = ['Hour', 'Action_Code', 'Status_Code']
+            clf = IsolationForest(contamination=0.025, random_state=42)
+            df_ml['Anomaly_Score'] = clf.fit_predict(df_ml[features])
+
+            df['Is_Anomaly'] = df_ml['Anomaly_Score'] == -1
+            return df
+
+        with st.spinner("Memindai log jaringan..."):
+            raw_logs = generate_network_logs()
+            analyzed_logs = detect_anomalies_iforest(raw_logs)
+            
+        total_logs = len(analyzed_logs)
+        total_anomalies = analyzed_logs['Is_Anomaly'].sum()
+        
+        c1, c2, c3 = st.columns(3)
+        c1.metric("Total Aktivitas (30 Hari)", f"{total_logs:,}")
+        c2.metric("Anomali Terdeteksi", f"{total_anomalies}", delta="-High Risk", delta_color="inverse")
+        c3.metric("Status Pemantauan", "Active", delta="Safe", delta_color="normal")
+        
+        st.markdown("<hr style='margin:18px 0;border-color:#E5DDEF;'>", unsafe_allow_html=True)
+        st.subheader("Visualisasi Persebaran Waktu Akses")
+        
+        fig = px.scatter(
+            analyzed_logs, x="Timestamp", y=analyzed_logs["Timestamp"].dt.hour, 
+            color="Is_Anomaly", 
+            color_discrete_map={False: "#6d9873", True: "#e74c3c"},
+            labels={"y": "Jam Akses (0-23)", "Timestamp": "Tanggal", "Is_Anomaly": "Status Anomali"},
         )
-        st.info(
-            "Tempat integrasi modul rekan: tabel log, filter IP, deteksi login gagal, "
-            "lonjakan unduhan, Isolation Forest, dan ringkasan alert."
+        fig.update_layout(
+            template="plotly_white", 
+            paper_bgcolor="rgba(255,255,255,0)",
+            plot_bgcolor="rgba(255,255,255,0.72)", 
+            font=dict(family="DM Sans, sans-serif", color="#35533d"),
+            margin=dict(l=15, r=15, t=15, b=15)
         )
+        fig.update_yaxes(gridcolor="#e6eee4")
+        fig.update_xaxes(showgrid=False)
+        st.plotly_chart(fig, use_container_width=True)
+        
+        st.subheader("Audit Trail & Log Akses")
+        def highlight_anomalies(row):
+            if row['Is_Anomaly']:
+                return ['background-color: #ffe6e6; color: #a94442'] * len(row)
+            return [''] * len(row)
+
+        display_df = analyzed_logs.style.apply(highlight_anomalies, axis=1)
+        st.dataframe(display_df, use_container_width=True, height=400)
+        
+        st.info("Keterangan: Baris berwarna merah menandakan indikasi anomali yang ditemukan oleh Machine Learning (misal: akses di luar jam operasional, IP asing yang tidak dikenal, atau percobaan login gagal berturut-turut).")

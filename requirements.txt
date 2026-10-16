@@ -1,7 +1,7 @@
-   streamlit
-   pandas
-   scikit-learn
-   openpyxl
-   plotly
-   xlrd
-   supabase
+streamlit
+pandas
+numpy
+plotly
+scikit-learn
+supabase
+openpyxl

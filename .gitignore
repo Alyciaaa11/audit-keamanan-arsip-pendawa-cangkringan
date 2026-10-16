@@ -225,3 +225,16 @@ __marimo__/
 
 .streamlit/secrets.toml
 .env
+
+# Local editor settings
+.vscode/
+
+# Partner data and test datasets
+Rekap laporan 5 tahun (September 2026 ).xlsx
+Rekap_DUMMY_*.xlsx
+
+# Local environment and credentials
+.env
+.env.*
+!.env.example
+.streamlit/secrets.toml
