@@ -12,7 +12,50 @@ import pandas as pd
 import plotly.express as px
 import numpy as np
 
-st.set_page_config(page_title="Agribusiness Secure Archive", layout="wide")
+st.set_page_config(
+    page_title="Agribusiness Secure Archive",
+    layout="wide"
+)
+
+# =========================================================
+# DASHBOARD STATE & NOTIFICATIONS
+# =========================================================
+
+if "dashboard_files" not in st.session_state:
+    st.session_state["dashboard_files"] = {}
+
+if "dashboard_verified_files" not in st.session_state:
+    st.session_state["dashboard_verified_files"] = set()
+
+if "dashboard_production" not in st.session_state:
+    st.session_state["dashboard_production"] = None
+
+if "dashboard_production_anomalies" not in st.session_state:
+    st.session_state["dashboard_production_anomalies"] = 0
+
+if "dashboard_network_anomalies" not in st.session_state:
+    st.session_state["dashboard_network_anomalies"] = None
+
+if "dashboard_notifications" not in st.session_state:
+    st.session_state["dashboard_notifications"] = []
+
+
+def add_dashboard_notification(message, category="info"):
+    """Simpan notifikasi tanpa mengulang event terakhir."""
+    notifications = st.session_state["dashboard_notifications"]
+
+    event = {
+        "message": message,
+        "category": category,
+        "time": datetime.now().astimezone().strftime("%H:%M:%S"),
+    }
+
+    if not notifications or notifications[-1]["message"] != message:
+        notifications.append(event)
+
+    # Batasi riwayat notifikasi dalam sesi.
+    st.session_state["dashboard_notifications"] = notifications[-20:]
+
 
 st.markdown("""
 <style>
@@ -236,31 +279,162 @@ if st.session_state.get("saved_archive_bytes") is not None:
     )
 reference_hash = st.session_state.get("trusted_reference_hash", "")
 
+
 if selected_page == "Dashboard":
     st.markdown("""
-    <div style="background:linear-gradient(105deg,#FFFFFF 0%,#FAF7FF 65%,#EEE7F8 100%);border:1px solid #E5DDEF;border-radius:20px;padding:25px 28px;margin:.3rem 0 1.2rem;box-shadow:0 7px 22px rgba(91,64,126,.06);">
-      <div style="font-size:1.55rem;font-weight:750;color:#40334F;">🌿 Welcome back, Admin!</div>
-      <div style="color:#706879;margin-top:8px;max-width:650px;">Monitor integritas arsip, tren produksi, dan indikator anomali agribisnis dalam satu dashboard.</div>
+    <div style="
+        background: linear-gradient(105deg,#FFFFFF 0%,#FAF7FF 65%,#EEE7F8 100%);
+        border: 1px solid #E5DDEF;
+        border-radius: 20px;
+        padding: 25px 28px;
+        margin: .3rem 0 1.2rem;
+        box-shadow: 0 7px 22px rgba(91,64,126,.06);
+    ">
+        <div style="font-size:1.55rem;font-weight:750;color:#40334F;">
+            🌿 Welcome back, Admin!
+        </div>
+        <div style="color:#706879;margin-top:8px;max-width:700px;">
+            Pantau integritas arsip, ringkasan produksi, dan indikasi anomali
+            agribisnis dalam satu dashboard.
+        </div>
     </div>
     """, unsafe_allow_html=True)
-    m1, m2, m3, m4 = st.columns(4)
-    m1.metric("Total Files", "—", help="Akan dihitung dari arsip yang diproses pada sesi ini.")
-    m2.metric("Integrity Verified", "—", help="Status bergantung pada verifikasi file yang dipilih.")
-    m3.metric("Total Production", "—", help="Belum ada file produksi yang dianalisis pada halaman Dashboard.")
-    m4.metric("Detected Anomalies", "—", help="Akan tampil setelah analisis produksi dijalankan.")
-    left, right = st.columns([1.4, 1])
+
+    # =========================================
+    # AMBIL DATA RINGKASAN DARI SESSION STATE
+    # =========================================
+    files = st.session_state["dashboard_files"]
+    verified_files = st.session_state["dashboard_verified_files"]
+
+    total_files = len(files)
+
+    # Hanya hitung file terverifikasi yang masih tercatat sebagai arsip.
+    total_verified = len(set(files.keys()) & set(verified_files))
+
+    production_df = st.session_state["dashboard_production"]
+    production_anomalies = st.session_state["dashboard_production_anomalies"]
+    network_anomalies = st.session_state["dashboard_network_anomalies"]
+
+    # Total produksi hanya boleh dijumlahkan jika satuannya sama.
+    production_label = "Belum dianalisis"
+    production_help = "Jalankan Production Analytics untuk membaca data produksi."
+
+    if production_df is not None and not production_df.empty:
+        if {"produksi", "satuan"}.issubset(production_df.columns):
+            units = (
+                production_df["satuan"]
+                .fillna("Tidak diketahui")
+                .astype(str)
+                .str.strip()
+                .replace("", "Tidak diketahui")
+                .unique()
+                .tolist()
+            )
+
+            if len(units) == 1:
+                total_production = pd.to_numeric(
+                    production_df["produksi"], errors="coerce"
+                ).sum()
+                production_label = f"{total_production:,.2f} {units[0]}"
+                production_help = "Total produksi dari data yang telah dianalisis."
+            else:
+                production_label = "Multi-satuan"
+                production_help = (
+                    "Data memiliki beberapa satuan. Nilai tidak dijumlahkan "
+                    "karena satuan berbeda tidak bisa dibandingkan langsung."
+                )
+
+    # Jumlah anomali yang sudah terdeteksi.
+    if network_anomalies is None:
+        anomaly_display = str(production_anomalies)
+        anomaly_help = (
+            f"Anomali produksi: {production_anomalies}. "
+            "Pemindaian jaringan belum dilakukan."
+        )
+    else:
+        anomaly_display = str(production_anomalies + network_anomalies)
+        anomaly_help = (
+            f"Anomali produksi: {production_anomalies}; "
+            f"indikasi anomali jaringan: {network_anomalies}. "
+            "Angka ini merupakan indikasi untuk ditinjau, bukan bukti serangan."
+        )
+
+    # =========================================
+    # LAYOUT UTAMA DASHBOARD
+    # =========================================
+    left, right = st.columns([1.5, 1], gap="large")
+
     with left:
         st.markdown("### Ringkasan Project")
-        st.info("Pilih **Digital Archive & Integrity** untuk mengunggah file dan memeriksa SHA-256, atau **Production Analytics** untuk melihat tren dan trigger perubahan produksi.")
+        st.caption("Status arsip dan analisis selama sesi aplikasi ini.")
+
+        metric1, metric2 = st.columns(2)
+        metric3, metric4 = st.columns(2)
+
+        metric1.metric(
+            "Total Files",
+            total_files,
+            help="Jumlah arsip unik yang diproses selama sesi ini."
+        )
+
+        metric2.metric(
+            "Integrity Verified",
+            f"{total_verified} / {total_files}",
+            help=(
+                "Jumlah arsip yang telah cocok dengan hash referensi "
+                "manual atau hash tepercaya di cloud."
+            )
+        )
+
+        metric3.metric(
+            "Total Production",
+            production_label,
+            help=production_help
+        )
+
+        metric4.metric(
+            "Detected Anomalies",
+            anomaly_display,
+            help=anomaly_help
+        )
+
+        st.caption(
+            "Catatan: data dan riwayat pada ringkasan ini mengikuti "
+            "aktivitas yang tersimpan selama sesi aplikasi."
+        )
+
+    
     with right:
         st.markdown("### Notifications")
-        if st.session_state.get("show_notifications", False):
-            st.info("Notifikasi integritas dan analisis akan ditampilkan setelah lu memproses file. Tidak ada event yang dibuat-buat.")
-        else:
-            st.caption("Belum ada notifikasi baru pada sesi ini.")
-        if st.button("Lihat notifikasi", key="dashboard_notifications"):
-            st.session_state["show_notifications"] = not st.session_state.get("show_notifications", False)
-            st.rerun()
+
+        notifications = st.session_state.get(
+            "dashboard_notifications", []
+        )
+
+        # Satu kotak riwayat dengan area scroll tetap.
+        with st.container(height=440, border=True):
+            if not notifications:
+                st.caption(
+                    "Belum ada notifikasi. Aktivitas akan muncul "
+                    "di sini setelah arsip diproses atau analisis dijalankan."
+                )
+            else:
+                for event in reversed(notifications):
+                    category = event.get("category", "info")
+
+                    if category == "success":
+                        icon = "✅"
+                    elif category == "warning":
+                        icon = "⚠️"
+                    else:
+                        icon = "ℹ️"
+
+                    st.caption(event.get("time", "--:--:--"))
+                    st.markdown(
+                        f"{icon} **{event['message']}**"
+                    )
+                    st.divider()
+
 
 if selected_page == "Settings":
     st.markdown("### Settings")
@@ -503,11 +677,37 @@ if selected_page == "Digital Archive & Integrity":
                 on_change=persist_reference_hash,
             )
             st.session_state["trusted_reference_hash"] = reference_hash
+           
             if reference_hash.strip():
                 if sha256_hash.lower() == reference_hash.strip().lower():
                     st.success("Hash cocok dengan referensi.")
+        
                 else:
                     st.error("Hash tidak cocok dengan referensi.")
+                    st.session_state["dashboard_verified_files"].discard(
+                        filename_key(archive_file.name)
+                    )
+                    add_dashboard_notification(
+                        f"Hash tidak cocok: {archive_file.name}",
+                        "warning"
+                    )
+            else:
+                st.session_state["dashboard_verified_files"].discard(
+                    filename_key(archive_file.name)
+                )
+
+
+            # Catat arsip yang diproses selama sesi.
+            st.session_state["dashboard_files"][filename_key(archive_file.name)] = {
+                "name": archive_file.name,
+                "sha256": sha256_hash,
+                "size": len(file_bytes),
+            }
+
+            add_dashboard_notification(
+                f"Arsip diproses: {archive_file.name}",
+                "info"
+            )
 
             st.caption(
                 "Waktu pemeriksaan: "
@@ -556,8 +756,16 @@ if selected_page == "Digital Archive & Integrity":
                                 st.error("Penyimpanan ditolak: nama file sudah terdaftar dengan isi berbeda.")
                 except Exception as exc:
                     st.error(f"Tidak dapat memeriksa registry cloud: {exc}")
-                    st.caption("Pastikan tabel file_hash_registry sudah dibuat dan kredensial cloud benar.")
 
+            st.session_state["dashboard_verified_files"].add(
+                filename_key(archive_file.name)
+            )
+
+            add_dashboard_notification(
+                f"Integritas terverifikasi: {archive_file.name}",
+                "success"
+            )
+            
 
 # =========================================================
 # TAB 2 — PRODUCTION ANALYTICS
@@ -716,6 +924,9 @@ if selected_page == "Production Analytics":
                     year_range = (min_year, max_year)
                     st.sidebar.write("Tahun data:", min_year)
 
+                # Data produksi yang valid untuk ringkasan Dashboard.
+                st.session_state["dashboard_production"] = df.copy()
+
                 product_options = sorted(df["produk"].unique().tolist())
                 selected_products = st.sidebar.multiselect(
                     "Pilih produk",
@@ -836,6 +1047,19 @@ if selected_page == "Production Analytics":
                             use_container_width=True,
                             hide_index=True
                         )
+
+                    st.session_state["dashboard_production_anomalies"] = len(alerts)
+                    if len(alerts) > 0:
+                        add_dashboard_notification(
+                            f"Ditemukan {len(alerts)} catatan perubahan produksi yang perlu ditinjau.",
+                            "warning"
+                        )
+                    else:
+                        add_dashboard_notification(
+                            "Analisis perubahan produksi selesai: tidak ada trigger pada data terpilih.",
+                            "success"
+                        )
+
                     st.caption(
                         f"Metode: aturan perubahan tahunan. Trigger aktif jika perubahan absolut melebihi {threshold}% "
                         "atau produksi berubah dari 0 menjadi nilai nonzero. Ini hanya penanda untuk pemeriksaan admin, "
@@ -924,7 +1148,11 @@ if selected_page == "Network Log Forensics":
             
         total_logs = len(analyzed_logs)
         total_anomalies = analyzed_logs['Is_Anomaly'].sum()
-        
+
+        st.session_state["dashboard_network_anomalies"] = int(
+            total_anomalies
+            )
+    
         c1, c2, c3 = st.columns(3)
         c1.metric("Total Aktivitas (30 Hari)", f"{total_logs:,}")
         c2.metric("Anomali Terdeteksi", f"{total_anomalies}", delta="-High Risk", delta_color="inverse")
@@ -960,3 +1188,8 @@ if selected_page == "Network Log Forensics":
         st.dataframe(display_df, use_container_width=True, height=400)
         
         st.info("Keterangan: Baris berwarna merah menandakan indikasi anomali yang ditemukan oleh Machine Learning (misal: akses di luar jam operasional, IP asing yang tidak dikenal, atau percobaan login gagal berturut-turut).")
+
+        add_dashboard_notification(
+            f"Pemindaian log jaringan selesai: {int(total_anomalies)} indikasi anomali ditemukan.",
+            "warning" if total_anomalies > 0 else "success"
+            )
